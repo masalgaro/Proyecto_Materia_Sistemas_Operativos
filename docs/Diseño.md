@@ -38,7 +38,7 @@ Mensajes desde el cliente al nodo de control:
     "tipo-fichero": "texto/ejecutable"
 }
 
-Mensajesw desde el nodo de control a los nodos auxiliares:
+Mensajes desde el nodo de control a los nodos auxiliares:
 {
     "origen": "nodo-control",
     "accion": "crear/leer/modificar/eliminar"
