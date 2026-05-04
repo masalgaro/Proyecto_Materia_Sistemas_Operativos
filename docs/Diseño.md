@@ -93,9 +93,9 @@ El siguiente JSON muestra un ejemplo de la estructura de los mensajes que el cli
     },
     "instruccion": {
         "tuberias": [tuberia1, tuberia2],
-        "operacion": "crear"/"actualizar"/"leer"/"borrar"/"suspender"/"resumir"/"terminar"/"ejecutar"/"estado"/"matar"/"parar"
-        "identificador": "fXXXX"/"pXXXX"/null
-    }
+        "operacion": "crear"/"actualizar"/"leer"/"borrar"/"suspender"/"resumir"/"terminar"/"ejecutar"/"estado"/"matar"/"parar",
+        "identificador": "fXXXX"/"pXXXX"/null,
+    },
 }
 ```
 Pasemos por cada campo y sus posibles opciones uno a uno:
