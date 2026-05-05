@@ -27,6 +27,8 @@ Adicional a estas funcionalidades básicas, el cliente también puede:
 
 Las cuales llamaremos *funcionalidades de control* para abreviar.
 
+Adicionalmente, se debe agregar algún tipo de funcionalidad para limpiar o reiniciar el sistema. Esto se explicará más en la siguiente sección.
+
 ## Nodo de control 
 
 También referido como el *control de lotes*, es el servicio central, que funciona de puente entre el cliente y los otros nodos o servicios, los cuales se detallarán más dentro de la sección de "Nodos auxiliares".
@@ -51,6 +53,8 @@ Realizan las operaciones que índico el cliente. Existen tres tipos:
 ### Gestor de ficheros (gesfich)
 
 Realiza el CRUD de ficheros de texto plano, según índique el cliente. Estos ficheros se crean en una región de almacenamiento `aralmac`, que puede corresponder a un directorio dentro del sistema de almacenamiento local, o a un motor de base de datos, o algún otro medio. Esta región también es usada en el gestor de programas.
+
+El mismo `aralmac` es la región que el cliente puede reiniciar si lo desea, eliminando todo archivo y/o referencia en memoria. Esto aplica para el resto de nodos auxiliares.
 
 Estos ficheros siempre se crean vacíos, y serán rellenados cuando se llame al 'ejecutor', el que se explicará más adelante.
 
@@ -87,6 +91,7 @@ El siguiente JSON muestra un ejemplo de la estructura de los mensajes que el cli
 {
     "info-control": {
         "id-cliente": XXXXXXX,
+        "reinicio": true/false,
         "ejecutar": true/false,
         "objetivo": "fichero"/"programa"/null,
         "usa-bd": true/false,
@@ -109,6 +114,7 @@ Pasemos por cada campo y sus posibles opciones uno a uno:
 
 * **info-control:** Un campo general que guarda información de control sobre la petición, es decir, cosas que no incluyen parámetros u operaciones directamente, sino que informan el resto de la operación.
     * **id-cliente:** [NUMERICO] Un identificador único para el cliente, debería ser el propio *PID*. Permite identificar *cuál* cliente envío un mensaje y por ende a quién se debe responder.
+    * **reinicio:** [BOOLEANO] Índica si la petición reinicia el sistema, eliminando el almacenamiento y limpiando la memoria. Si este campo es `true`, el resto del mensaje se ignora y el cliente debe enviar otra petición para usar el sistema.
     * **ejecutar:** [BOOLEANO] Índica si la petición es para el ejecutor o no. Si este campo es `true`, el campo de "objetivo" ***DEBE*** ser `null`.
     * **objetivo:** [STRING o NULO] Índica a cuál gestor se debe redirigir la petición, *excepto* si la petición es para el ejecutor.
     * **usa-bd:** [BOOLEANO] Índica si el nodo de control debe interpretar la siguiente ruta como parte del sistema de ficheros de la máquina local o no. El valor `false` índica que se trabaja de forma local.
