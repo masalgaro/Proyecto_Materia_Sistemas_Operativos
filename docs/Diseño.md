@@ -101,7 +101,7 @@ El siguiente JSON muestra un ejemplo de la estructura de los mensajes que el cli
 Pasemos por cada campo y sus posibles opciones uno a uno:
 
 * **info-control:** Un campo general que guarda información de control sobre la petición, es decir, cosas que no incluyen parámetros u operaciones directamente, sino que informan el resto de la operación.
-    * **ejecutar:** [BOOLEANO] Índica si la petición es para el ejecutor o no. Si este campo es `true`, el campo de "objetvio" ***DEBE*** ser `null`.
+    * **ejecutar:** [BOOLEANO] Índica si la petición es para el ejecutor o no. Si este campo es `true`, el campo de "objetivo" ***DEBE*** ser `null`.
     * **objetivo:** [STRING o NULO] Índica a cuál gestor se debe redirigir la petición, *excepto* si la petición es para el ejecutor.
     * **usa-bd:** [BOOLEANO] Índica si el nodo de control debe interpretar la siguiente ruta como parte del sistema de ficheros de la máquina local o no. El valor `false` índica que se trabaja de forma local.
     * **aralmac:** [STRING] La ruta o información del área de almacenamiento como tal.
