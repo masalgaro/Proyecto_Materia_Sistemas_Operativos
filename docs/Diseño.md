@@ -96,6 +96,12 @@ El siguiente JSON muestra un ejemplo de la estructura de los mensajes que el cli
         "operacion": "crear"/"actualizar"/"leer"/"borrar"/"suspender"/"resumir"/"terminar"/"ejecutar"/"estado"/"matar"/"parar",
         "identificador": "fXXXX"/"pXXXX"/null,
     },
+    "mensaje-informacion": {
+        "nodo-origen": "ctrllt"/"gesfich"/"gesprog"/"ejecutor",
+        "id-mensaje": XXXXXXX,
+        "tipo-mensaje": "correcto"/"error"/"debug",
+        "cuerpo-mensaje": "blablablablablabla"/null,
+    }
 }
 ```
 Pasemos por cada campo y sus posibles opciones uno a uno:
@@ -109,4 +115,9 @@ Pasemos por cada campo y sus posibles opciones uno a uno:
     * **tuberias:** [ARRAY | STRING] El nombre de las tuberías usadas para la comunicación con el nodo de control.
     * **operación:** [STRING] La operación como tal, en el JSON de ejemplo se listan las operaciones admitidas, y, si por algún motivo llega un mensaje con una petición que no corresponde a las anteriores, el nodo de control ***DEBE*** retornar algún tipo de mensaje de error (por ejemplo: "[ERROR] Operación desconocida, las operaciones admitidas para el objetivo dado son:").
     * **identificador:** [STRING o NULO] El identificador para el fichero o programa sobre el que se desea realizar la operación. Los valores nulos son esperados para las operaciones de crear, estado, parar, suspender, y terminar; y es aceptado para la operación de leer. Un valor nulo en otra operación (o, por el contrario, proveer un valor para las operaciones que NO buscan un identificador) ***DEBE*** ser ignorado o retornar un error.
+* **mensaje-informacion:** Campo que posee el cuerpo de los mensajes como tal, es decir, el texto que el usuario lee.
+    * **nodo-origen:** [STRING] El nombre del nodo que envía el mensaje. Usa los nombres cortos de cada nodo, cualquier otro nombre es inválido y ***DEBE*** ser ignorado.
+    * **id-mensaje:** [NUMERICO] Identificador del mensaje.
+    * **tipo-mensaje:** [STRING] Distingue entre un mensaje de confirmación (correcto), un error, o algún tipo de mensaje de depuración (debug).
+    * **cuerpo-mensaje:** [STRING o NULO] El texto del mensaje como tal, esto puede ser cualquier cosa.
 
