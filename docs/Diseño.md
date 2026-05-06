@@ -80,52 +80,39 @@ El ejecutor tiene unas funcionalidades específicas:
 
 El ejecutor también responde a las instrucciones de suspender y resumir. En vez de 'Terminar', el ejecutor se puede 'Parar'.
 
-# Formato de los mensajes
+# Formato de los mensajes 
 
-El siguiente JSON muestra un ejemplo de la estructura de los mensajes que el cliente enviaría al nodo de control:
+El cliente envía mensajes en JSON al nodo de control. Sin embargo, en esta primera iteración, vamos a manejar mensajes que se envían de forma directa a los nodos auxiliares. Estos mensajes serán definidos con el propósito de ser modulares y fácilmente aplicables al nodo de control cuando sea el momento de implementarlo.
 
-> [!WARNING]
-> Notar, el siguiente JSON ***NO*** es un JSON válido, los valores para las variables muestran las opciones que podría tener cada uno.
-
-```json 
+```json
 {
     "info-control": {
         "id-cliente": XXXXXXX,
+        "tuberias": ["/tmp/tuberia1", "/tmp/tuberia2"],
         "reinicio": true/false,
+        "local-fs": true/false,
         "ejecutar": true/false,
-        "objetivo": "fichero"/"programa"/null,
-        "usa-bd": true/false,
+        "objetivo": "fichero"/"programa"/null
+    },
+    "info-instruccion": {
+        "id-recurso": "fXXXX"/"pXXXX"/null/XXXXXXX,
+        "operacion": "crear"/"actualizar"/"leer"/"borrar"/"suspender"/"resumir"/"terminar"/"ejecutar"/"estado"/"matar"/"parar"
         "aralmac": "info-almacenamiento",
-    },
-    "instruccion": {
-        "tuberias": [tuberia1, tuberia2],
-        "operacion": "crear"/"actualizar"/"leer"/"borrar"/"suspender"/"resumir"/"terminar"/"ejecutar"/"estado"/"matar"/"parar",
-        "identificador": "fXXXX"/"pXXXX"/null,
-    },
-    "mensaje-informacion": {
-        "nodo-origen": "ctrllt"/"gesfich"/"gesprog"/"ejecutor",
-        "id-mensaje": XXXXXXX,
-        "tipo-mensaje": "correcto"/"error"/"debug",
-        "cuerpo-mensaje": "blablablablablabla"/null,
     }
 }
 ```
-Pasemos por cada campo y sus posibles opciones uno a uno:
 
-* **info-control:** Un campo general que guarda información de control sobre la petición, es decir, cosas que no incluyen parámetros u operaciones directamente, sino que informan el resto de la operación.
-    * **id-cliente:** [NUMERICO] Un identificador único para el cliente, debería ser el propio *PID*. Permite identificar *cuál* cliente envío un mensaje y por ende a quién se debe responder.
-    * **reinicio:** [BOOLEANO] Índica si la petición reinicia el sistema, eliminando el almacenamiento y limpiando la memoria. Si este campo es `true`, el resto del mensaje se ignora y el cliente debe enviar otra petición para usar el sistema.
-    * **ejecutar:** [BOOLEANO] Índica si la petición es para el ejecutor o no. Si este campo es `true`, el campo de "objetivo" ***DEBE*** ser `null`.
-    * **objetivo:** [STRING o NULO] Índica a cuál gestor se debe redirigir la petición, *excepto* si la petición es para el ejecutor.
-    * **usa-bd:** [BOOLEANO] Índica si el nodo de control debe interpretar la siguiente ruta como parte del sistema de ficheros de la máquina local o no. El valor `false` índica que se trabaja de forma local.
-    * **aralmac:** [STRING] La ruta o información del área de almacenamiento como tal.
-* **instrucción:** Campo que guarda las instrucciones específicas de la petición, el nodo de control compara el objetivo del campo anterior y la operación dada para envíar la órden correspondiente al nodo auxiliar.
-    * **tuberias:** [ARRAY | STRING] El nombre de las tuberías usadas para la comunicación con el nodo de control.
-    * **operación:** [STRING] La operación como tal, en el JSON de ejemplo se listan las operaciones admitidas, y, si por algún motivo llega un mensaje con una petición que no corresponde a las anteriores, el nodo de control ***DEBE*** retornar algún tipo de mensaje de error (por ejemplo: "[ERROR] Operación desconocida, las operaciones admitidas para el objetivo dado son:").
-    * **identificador:** [STRING o NULO] El identificador para el fichero o programa sobre el que se desea realizar la operación. Los valores nulos son esperados para las operaciones de crear, estado, parar, suspender, y terminar; y es aceptado para la operación de leer. Un valor nulo en otra operación (o, por el contrario, proveer un valor para las operaciones que NO buscan un identificador) ***DEBE*** ser ignorado o retornar un error.
-* **mensaje-informacion:** Campo que posee el cuerpo de los mensajes como tal, es decir, el texto que el usuario lee.
-    * **nodo-origen:** [STRING] El nombre del nodo que envía el mensaje. Usa los nombres cortos de cada nodo, cualquier otro nombre es inválido y ***DEBE*** ser ignorado.
-    * **id-mensaje:** [NUMERICO] Identificador del mensaje.
-    * **tipo-mensaje:** [STRING] Distingue entre un mensaje de confirmación (correcto), un error, o algún tipo de mensaje de depuración (debug).
-    * **cuerpo-mensaje:** [STRING o NULO] El texto del mensaje como tal, esto puede ser cualquier cosa.
+Esta estructura se enfoca en que el cliente establezca un mensaje claro, divido en dos secciones principales que un nodo auxiliar, o el nodo de control, pueden interpretar rápidamente. Cada campo se define de la siguiente forma:
+
+* **info-control:** Un objeto general que guarda información de control sobre la petición, como las tuberias, el PID del cliente, entre otros. Esto permite separar cosas como las instrucciones o los recursos por fuera cuando no siempre son necesarios.
+    * **id-cliente: [NUMERICO]** El *PID* del cliente, permite identificar cuál cliente realiza la petición (y por ende, a quién enviar mensajes de respuesta) cuando se maneje la concurrencia.
+    * **tuberias: [ARRAY | STRING]** Nombre de las tuberias usadas para la comunicación. Esta estructura fue pensada para un entorno UNIX por lo que el ejemplo usa dos tuberias (half-duplex) dentro de `/tmp/`.
+    * **reinicio: [BOOLEANO]** Indica si la petición reinicia el sistema, eliminando el almacenamiento y limpiando la memoria. Si este campo es `true`, el resto del mensaje no se toma en cuenta y el cliente debe realizar otra petición para acceder a otra funcionalidad.
+    * **local-fs: [BOOLEANO]** Significa "local-file-system", indica si el sistema debe usar el sistema de ficheros local o no. Si el valor es `true`, se trabajara de forma local dentro de la máquina en la ruta que de el cliente, si es válida, si el valor es `false`, se asume que la información contenida en el campo `aralmac` (en la segunda sección) tiene información de otra región de almacenamiento (base de datos, almacenamiento en nube, etc).
+    * **ejecutar: [BOOLEANO]** Indica si esta petición es para el ejecutor, es decir, si se piensa ejecutar o tratar un programa de lotes. Si este campo es `true`, el campo `objetivo` ***DEBE*** ser `false`.
+    * **objetivo: [STRING o NULO]** Indica a cuál gestor se debe redirigir la petición, *exceptuando* casos donde `ejecutar` sea verdadero, en los cuales su valor es nulo.
+* **info-instruccion:** Objeto que guarda la información más puntual de la instrucción que el cliente quiere realizar. En algunos casos la información contenida dentro de esta sección es ignorada, por lo que se separó como un objeto aparte.
+    * **id-recurso: [STRING o NULO o NUMERICO]** Identificador para el recurso (fichero o programa) sobre el que se quiere realizar una operación. Su valor es nulo para ciertas operaciones que no usan o no requieren un valor, como las operaciones de creación u operaciones de lectura. El valor numérico se usa para operaciones con el ejecutor, tomando el *PID* del proceso por lotes.
+    * **operacion: [STRING]** La operación a ejecutar. Se listan las operaciones admitidas en la estructura de ejemplo. Cualquier operación no válida ***DEBE*** retornar un mensaje de error.
+    * **aralmac: [STRING]** La información sobre la región de almacenamiento a trabajar. Cómo se debe interpretar depende del campo `local-fs` en el objeto anterior.
 
