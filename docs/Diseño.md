@@ -80,52 +80,155 @@ El ejecutor tiene unas funcionalidades específicas:
 
 El ejecutor también responde a las instrucciones de suspender y resumir. En vez de 'Terminar', el ejecutor se puede 'Parar'.
 
-# Formato de los mensajes
+# Formato de los mensajes 
 
-El siguiente JSON muestra un ejemplo de la estructura de los mensajes que el cliente enviaría al nodo de control:
+Se manejan diferentes formatos de esperados para la comunicación entre los diferentes nodos.
 
-> [!WARNING]
-> Notar, el siguiente JSON ***NO*** es un JSON válido, los valores para las variables muestran las opciones que podría tener cada uno.
+## Campos del Gestor de ficheros
 
-```json 
+### Peticiones
+
+```json
 {
-    "info-control": {
-        "id-cliente": XXXXXXX,
-        "reinicio": true/false,
-        "ejecutar": true/false,
-        "objetivo": "fichero"/"programa"/null,
-        "usa-bd": true/false,
-        "aralmac": "info-almacenamiento",
-    },
-    "instruccion": {
-        "tuberias": [tuberia1, tuberia2],
-        "operacion": "crear"/"actualizar"/"leer"/"borrar"/"suspender"/"resumir"/"terminar"/"ejecutar"/"estado"/"matar"/"parar",
-        "identificador": "fXXXX"/"pXXXX"/null,
-    },
-    "mensaje-informacion": {
-        "nodo-origen": "ctrllt"/"gesfich"/"gesprog"/"ejecutor",
-        "id-mensaje": XXXXXXX,
-        "tipo-mensaje": "correcto"/"error"/"debug",
-        "cuerpo-mensaje": "blablablablablabla"/null,
-    }
+   "servicio": "gesfich",
+   "operacion": "Crear"/"Leer"/"Actualizar"/"Borrar"/"Suspender"/"Resumir"/"Terminar",
+   "id-fichero": "f-XXXX",
+   "ruta": "ruta/al/fichero"´
 }
 ```
-Pasemos por cada campo y sus posibles opciones uno a uno:
 
-* **info-control:** Un campo general que guarda información de control sobre la petición, es decir, cosas que no incluyen parámetros u operaciones directamente, sino que informan el resto de la operación.
-    * **id-cliente:** [NUMERICO] Un identificador único para el cliente, debería ser el propio *PID*. Permite identificar *cuál* cliente envío un mensaje y por ende a quién se debe responder.
-    * **reinicio:** [BOOLEANO] Índica si la petición reinicia el sistema, eliminando el almacenamiento y limpiando la memoria. Si este campo es `true`, el resto del mensaje se ignora y el cliente debe enviar otra petición para usar el sistema.
-    * **ejecutar:** [BOOLEANO] Índica si la petición es para el ejecutor o no. Si este campo es `true`, el campo de "objetivo" ***DEBE*** ser `null`.
-    * **objetivo:** [STRING o NULO] Índica a cuál gestor se debe redirigir la petición, *excepto* si la petición es para el ejecutor.
-    * **usa-bd:** [BOOLEANO] Índica si el nodo de control debe interpretar la siguiente ruta como parte del sistema de ficheros de la máquina local o no. El valor `false` índica que se trabaja de forma local.
-    * **aralmac:** [STRING] La ruta o información del área de almacenamiento como tal.
-* **instrucción:** Campo que guarda las instrucciones específicas de la petición, el nodo de control compara el objetivo del campo anterior y la operación dada para envíar la órden correspondiente al nodo auxiliar.
-    * **tuberias:** [ARRAY | STRING] El nombre de las tuberías usadas para la comunicación con el nodo de control.
-    * **operación:** [STRING] La operación como tal, en el JSON de ejemplo se listan las operaciones admitidas, y, si por algún motivo llega un mensaje con una petición que no corresponde a las anteriores, el nodo de control ***DEBE*** retornar algún tipo de mensaje de error (por ejemplo: "[ERROR] Operación desconocida, las operaciones admitidas para el objetivo dado son:").
-    * **identificador:** [STRING o NULO] El identificador para el fichero o programa sobre el que se desea realizar la operación. Los valores nulos son esperados para las operaciones de crear, estado, parar, suspender, y terminar; y es aceptado para la operación de leer. Un valor nulo en otra operación (o, por el contrario, proveer un valor para las operaciones que NO buscan un identificador) ***DEBE*** ser ignorado o retornar un error.
-* **mensaje-informacion:** Campo que posee el cuerpo de los mensajes como tal, es decir, el texto que el usuario lee.
-    * **nodo-origen:** [STRING] El nombre del nodo que envía el mensaje. Usa los nombres cortos de cada nodo, cualquier otro nombre es inválido y ***DEBE*** ser ignorado.
-    * **id-mensaje:** [NUMERICO] Identificador del mensaje.
-    * **tipo-mensaje:** [STRING] Distingue entre un mensaje de confirmación (correcto), un error, o algún tipo de mensaje de depuración (debug).
-    * **cuerpo-mensaje:** [STRING o NULO] El texto del mensaje como tal, esto puede ser cualquier cosa.
+### Respuestas
 
+```json
+{
+    "estado": "ok"/"error",
+    "id-fichero": "f-XXXX",
+    "contenido": "<contenido-del-fichero>",
+    "ficheros": ["f-XXXX", "f-XXXX"],
+    "mensaje": "<descripcion-error>"
+}
+```
+
+## Campos del Gestor de procesos
+
+### Peticiones
+
+```json
+{
+    "servicio": "gesprog",
+    "operacion": "Guardar"/"Leer"/"Actualizar"/"Borrar"/"Suspender"/"Terminar",
+    "ejecutable": "ruta/al/ejecutable",
+    "args": ["arg1", "arg2"],
+    "env": ["CLAVE=VALOR"],
+    "id-programa": "p-XXXX"
+}
+```
+
+### Respuestas
+
+```json
+{
+    "estado": "ok"/"error",
+    "programas": ["p-XXXX", "p-XXXX"],
+    "programa": {
+        "id-programa": "p-XXXX",
+        "nombre": "nombre_ejecutable",
+        "args": ["arg1", "arg2"],
+        "env": ["CLAVE=VALOR"]
+    }
+    "mensaje": "<descripcion-error>",
+}
+```
+
+## Campos del Ejecutor
+
+### Peticiones
+
+```json
+{
+    "servicio": "ejecutor",
+    "operacion": "Ejecutar"/"Estado"/"Matar"/"Suspender"/"Resumir"/"Parar",
+    "id-programa": "p-XXXX",
+    "stdin": "f-XXXX",
+    "stdout": "f-XXXX",
+    "stderr": "f-XXXX",
+    "id-ejecucion": "e-XXXX"
+}
+```
+
+### Respuestas
+
+```json
+{
+    "estado": "ok"/"error",
+    "id-ejecucion": "e-XXXX",
+    "id-programa": "p-XXXX",
+    "proceso-estado": "Ejecutando"/"Terminado",
+    "codigo-salida": 0/1,
+    "procesos": [
+        {"id-ejecucion": "e-XXXX", "id-programa": "p-XXXX", "proceso-estado": "Ejecutando"/"Terminado", "codigo-salida": 0/1},
+    ]
+    "mensaje": "<descripcion-error>"
+}
+```
+
+## Campos Nodo de control 
+
+Este enruta las peticiones que llegan al servicio correspondiente según el valor del campo `servicio` en los JSON, sin embargo, también tiene una operación propia.
+
+### Peticion 
+
+```json
+{
+    "servicio": "ctrllt",
+    "operacion": "Terminar"
+}
+```
+Propaga `Terminar` a `gesfich` y `gesprog`, envía `Parar` al `ejecutor` y finaliza el controlador.
+
+### Respuestas
+
+```json
+{
+    "estado": "ok"/"error",
+    "mensaje": "<descripcion-error>"
+}
+```
+
+--- 
+## Definición campos y valores esperados
+
+Cada campo se define de la siguiente forma:
+
+| Nombre Campo     | Tipado  | Dirección | Descripción              | Nodo Responsable       | Valores Esperados                          |
+| :--------------- | :-----: | :-------: | :----------------------: | :--------------------: | -----------------------------------------: |
+| `servicio`       | string  | Petición  | Cuál servicio atiende    | Todos                  | gesfich/gesprog/ejecutor/ctrllt            |
+| `operacion`      | string  | Petición  | Nombre de la operación   | Todos                  | Crear, Ejecutar, Terminar, Guardar, etc.   |
+| `estado`         | string  | Respuesta | Estado de respuesta      | Todos                  | `ok` o `error`                             |
+| `mensaje`        | string  | Respuesta | Descripción de errores   | Todos                  | Texto descriptivo<sup>1</sub>              |
+| `id-fichero`     | string  | Ambos     | Identificador fichero    | `gesfich`              | Algo del estilo `f-0001`                   |
+| `contenido`      | string  | Respuesta | Contenido del fichero    | `gesfich`              | Cualquier cosa que esté escrita            |
+| `ficheros`       | array   | Respuesta | Ficheros procesados      | `gesfich`              | Lista del estilo `[f-0001, f-0002, ...]`   |
+| `ruta`           | string  | Petición  | Ruta al recurso          | `gesfich` & `gesprog`  | Ruta en el sistema de archivos             |
+| `id-programa`    | string  | Ambos     | Identificador programa   | `gesprog` & `ejecutor` | Algo del estilo `p-0001`                   |
+| `ejecutable`     | string  | Petición  | Ruta al ejecutable       | `gesprog`              | Ruta en el sistema de archivos             |
+| `args`           | array   | Ambos     | Argumentos del programa  | `gesprog`              | Lista `["-out", "f.txt", "v"]`             |
+| `env`            | array   | Ambos     | Variables de ambiente    | `gesprog`              | Lista como `["PATH=/bin/", "PASS=1234"]`   |
+| `nombre`         | string  | Respuesta | Nombre base ejecutable   | `gesprog`              | Nombre base del ejecutable                 |
+| `programa`       | object  | Respuesta | Objeto de metadatos      | `gesprog`              | Objeto metadatos. Repite campos anteriores |
+| `programas`      | array   | Respuesta | Programas procesados     | `gesprog`              | Lista del estilo `[p-0001, p-0002, ...]`   |
+| `id-ejecucion`   | string  | Ambos     | Identificador ejecutable | `ejecutor`             | Algo del estilo `e-0001`                   |
+| `stdin`          | string  | Petición  | Fichero para la entrada  | `ejecutor`             | Un fichero: `f-XXXX`                       |
+| `stdout`         | string  | Petición  | Fichero para la salida   | `ejecutor`             | Un fichero diferente a `stdin`: `f-XXXX`   |
+| `stderr`         | string  | Petición  | Fichero para el error    | `ejecutor`             | Un fichero diferente a los otros: `f-XXXX` |
+| `proceso-estado` | string  | Respuesta | Estado del ejecutable    | `ejecutor`             | Estado: Ejecutando, Suspendido, etc.       |
+| `codigo-salida`  | numeric | Respuesta | Código de salida         | `ejecutor`             | Valor numérico de sálida, normalmente 0    |
+| `procesos`       | array   | Respuesta | Objetos de proceso       | `ejecutor`             | Lista de objetos de proceso                |
+
+<sup>1</sup>Los mensajes esperados dependen del nodo. Sin embargo, el nodo `ctrllt` tiene unos específicos que se listan a conitnuación:
+
+* Serivicio desconocido
+* Operación ctrllt desconocida
+* Servicio no encontrado
+* Error enviando solicitud al servicio
+* Error leyendo respuesta del servicio
