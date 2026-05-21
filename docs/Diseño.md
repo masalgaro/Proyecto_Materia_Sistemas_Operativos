@@ -82,37 +82,153 @@ El ejecutor también responde a las instrucciones de suspender y resumir. En vez
 
 # Formato de los mensajes 
 
-El cliente envía mensajes en JSON al nodo de control. Sin embargo, en esta primera iteración, vamos a manejar mensajes que se envían de forma directa a los nodos auxiliares. Estos mensajes serán definidos con el propósito de ser modulares y fácilmente aplicables al nodo de control cuando sea el momento de implementarlo.
+Se manejan diferentes formatos de esperados para la comunicación entre los diferentes nodos.
+
+## Campos del Gestor de ficheros
+
+### Peticiones
 
 ```json
 {
-    "info-control": {
-        "id-cliente": XXXXXXX,
-        "tuberias": ["/tmp/tuberia1", "/tmp/tuberia2"],
-        "reinicio": true/false,
-        "local-fs": true/false,
-        "ejecutar": true/false,
-        "objetivo": "fichero"/"programa"/null
-    },
-    "info-instruccion": {
-        "id-recurso": "fXXXX"/"pXXXX"/null/XXXXXXX,
-        "operacion": "crear"/"actualizar"/"leer"/"borrar"/"suspender"/"resumir"/"terminar"/"ejecutar"/"estado"/"matar"/"parar"
-        "aralmac": "info-almacenamiento",
-    }
+   "servicio": "gesfich",
+   "operacion": "Crear"/"Leer"/"Actualizar"/"Borrar"/"Suspender"/"Resumir"/"Terminar",
+   "id-fichero": "f-XXXX",
+   "ruta": "ruta/al/fichero"´
 }
 ```
 
-Esta estructura se enfoca en que el cliente establezca un mensaje claro, divido en dos secciones principales que un nodo auxiliar, o el nodo de control, pueden interpretar rápidamente. Cada campo se define de la siguiente forma:
+### Respuestas
 
-* **info-control:** Un objeto general que guarda información de control sobre la petición, como las tuberias, el PID del cliente, entre otros. Esto permite separar cosas como las instrucciones o los recursos por fuera cuando no siempre son necesarios.
-    * **id-cliente: [NUMERICO]** El *PID* del cliente, permite identificar cuál cliente realiza la petición (y por ende, a quién enviar mensajes de respuesta) cuando se maneje la concurrencia.
-    * **tuberias: [ARRAY | STRING]** Nombre de las tuberias usadas para la comunicación. Esta estructura fue pensada para un entorno UNIX por lo que el ejemplo usa dos tuberias (half-duplex) dentro de `/tmp/`.
-    * **reinicio: [BOOLEANO]** Indica si la petición reinicia el sistema, eliminando el almacenamiento y limpiando la memoria. Si este campo es `true`, el resto del mensaje no se toma en cuenta y el cliente debe realizar otra petición para acceder a otra funcionalidad.
-    * **local-fs: [BOOLEANO]** Significa "local-file-system", indica si el sistema debe usar el sistema de ficheros local o no. Si el valor es `true`, se trabajara de forma local dentro de la máquina en la ruta que de el cliente, si es válida, si el valor es `false`, se asume que la información contenida en el campo `aralmac` (en la segunda sección) tiene información de otra región de almacenamiento (base de datos, almacenamiento en nube, etc).
-    * **ejecutar: [BOOLEANO]** Indica si esta petición es para el ejecutor, es decir, si se piensa ejecutar o tratar un programa de lotes. Si este campo es `true`, el campo `objetivo` ***DEBE*** ser `false`.
-    * **objetivo: [STRING o NULO]** Indica a cuál gestor se debe redirigir la petición, *exceptuando* casos donde `ejecutar` sea verdadero, en los cuales su valor es nulo.
-* **info-instruccion:** Objeto que guarda la información más puntual de la instrucción que el cliente quiere realizar. En algunos casos la información contenida dentro de esta sección es ignorada, por lo que se separó como un objeto aparte.
-    * **id-recurso: [STRING o NULO o NUMERICO]** Identificador para el recurso (fichero o programa) sobre el que se quiere realizar una operación. Su valor es nulo para ciertas operaciones que no usan o no requieren un valor, como las operaciones de creación u operaciones de lectura. El valor numérico se usa para operaciones con el ejecutor, tomando el *PID* del proceso por lotes.
-    * **operacion: [STRING]** La operación a ejecutar. Se listan las operaciones admitidas en la estructura de ejemplo. Cualquier operación no válida ***DEBE*** retornar un mensaje de error.
-    * **aralmac: [STRING]** La información sobre la región de almacenamiento a trabajar. Cómo se debe interpretar depende del campo `local-fs` en el objeto anterior.
+```json
+{
+    "estado": "ok"/"error",
+    "id-fichero": "f-XXXX",
+    "contenido": "<contenido-del-fichero>",
+    "ficheros": ["f-XXXX", "f-XXXX"],
+    "mensaje": "<descripcion-error>"
+}
+```
 
+## Campos del Gestor de procesos
+
+### Peticiones
+
+```json
+{
+    "servicio": "gesprog",
+    "operacion": "Guardar"/"Leer"/"Actualizar"/"Borrar"/"Suspender"/"Terminar",
+    "ejecutable": "ruta/al/ejecutable",
+    "args": ["arg1", "arg2"],
+    "env": ["CLAVE=VALOR"],
+    "id-programa": "p-XXXX"
+}
+```
+
+### Respuestas
+
+```json
+{
+    "estado": "ok"/"error",
+    "programas": ["p-XXXX", "p-XXXX"],
+    "programa": {
+        "id-programa": "p-XXXX",
+        "nombre": "nombre_ejecutable",
+        "args": ["arg1", "arg2"],
+        "env": ["CLAVE=VALOR"]
+    }
+    "mensaje": "<descripcion-error>",
+}
+```
+
+## Campos del Ejecutor
+
+### Peticiones
+
+```json
+{
+    "servicio": "ejecutor",
+    "operacion": "Ejecutar"/"Estado"/"Matar"/"Suspender"/"Resumir"/"Parar",
+    "id-programa": "p-XXXX",
+    "stdin": "f-XXXX",
+    "stdout": "f-XXXX",
+    "stderr": "f-XXXX",
+    "id-ejecucion": "e-XXXX"
+}
+```
+
+### Respuestas
+
+```json
+{
+    "estado": "ok"/"error",
+    "id-ejecucion": "e-XXXX",
+    "id-programa": "p-XXXX",
+    "proceso-estado": "Ejecutando"/"Terminado",
+    "codigo-salida": 0/1,
+    "procesos": [
+        {"id-ejecucion": "e-XXXX", "id-programa": "p-XXXX", "proceso-estado": "Ejecutando"/"Terminado", "codigo-salida": 0/1},
+    ]
+    "mensaje": "<descripcion-error>"
+}
+```
+
+## Campos Nodo de control 
+
+Este enruta las peticiones que llegan al servicio correspondiente según el valor del campo `servicio` en los JSON, sin embargo, también tiene una operación propia.
+
+### Peticion 
+
+```json
+{
+    "servicio": "ctrllt",
+    "operacion": "Terminar"
+}
+```
+Propaga `Terminar` a `gesfich` y `gesprog`, envía `Parar` al `ejecutor` y finaliza el controlador.
+
+### Respuestas
+
+```json
+{
+    "estado": "ok"/"error",
+    "mensaje": "<descripcion-error>"
+}
+```
+
+--- 
+## Definición campos y valores esperados
+
+Cada campo se define de la siguiente forma:
+
+| Nombre Campo     | Tipado  | Dirección | Descripción              | Nodo Responsable       | Valores Esperados                          |
+| :--------------- | :-----: | :-------: | :----------------------: | :--------------------: | -----------------------------------------: |
+| `servicio`       | string  | Petición  | Cuál servicio atiende    | Todos                  | gesfich/gesprog/ejecutor/ctrllt            |
+| `operacion`      | string  | Petición  | Nombre de la operación   | Todos                  | Crear, Ejecutar, Terminar, Guardar, etc.   |
+| `estado`         | string  | Respuesta | Estado de respuesta      | Todos                  | `ok` o `error`                             |
+| `mensaje`        | string  | Respuesta | Descripción de errores   | Todos                  | Texto descriptivo<sup>1</sub>              |
+| `id-fichero`     | string  | Ambos     | Identificador fichero    | `gesfich`              | Algo del estilo `f-0001`                   |
+| `contenido`      | string  | Respuesta | Contenido del fichero    | `gesfich`              | Cualquier cosa que esté escrita            |
+| `ficheros`       | array   | Respuesta | Ficheros procesados      | `gesfich`              | Lista del estilo `[f-0001, f-0002, ...]`   |
+| `ruta`           | string  | Petición  | Ruta al recurso          | `gesfich` & `gesprog`  | Ruta en el sistema de archivos             |
+| `id-programa`    | string  | Ambos     | Identificador programa   | `gesprog` & `ejecutor` | Algo del estilo `p-0001`                   |
+| `ejecutable`     | string  | Petición  | Ruta al ejecutable       | `gesprog`              | Ruta en el sistema de archivos             |
+| `args`           | array   | Ambos     | Argumentos del programa  | `gesprog`              | Lista `["-out", "f.txt", "v"]`             |
+| `env`            | array   | Ambos     | Variables de ambiente    | `gesprog`              | Lista como `["PATH=/bin/", "PASS=1234"]`   |
+| `nombre`         | string  | Respuesta | Nombre base ejecutable   | `gesprog`              | Nombre base del ejecutable                 |
+| `programa`       | object  | Respuesta | Objeto de metadatos      | `gesprog`              | Objeto metadatos. Repite campos anteriores |
+| `programas`      | array   | Respuesta | Programas procesados     | `gesprog`              | Lista del estilo `[p-0001, p-0002, ...]`   |
+| `id-ejecucion`   | string  | Ambos     | Identificador ejecutable | `ejecutor`             | Algo del estilo `e-0001`                   |
+| `stdin`          | string  | Petición  | Fichero para la entrada  | `ejecutor`             | Un fichero: `f-XXXX`                       |
+| `stdout`         | string  | Petición  | Fichero para la salida   | `ejecutor`             | Un fichero diferente a `stdin`: `f-XXXX`   |
+| `stderr`         | string  | Petición  | Fichero para el error    | `ejecutor`             | Un fichero diferente a los otros: `f-XXXX` |
+| `proceso-estado` | string  | Respuesta | Estado del ejecutable    | `ejecutor`             | Estado: Ejecutando, Suspendido, etc.       |
+| `codigo-salida`  | numeric | Respuesta | Código de salida         | `ejecutor`             | Valor numérico de sálida, normalmente 0    |
+| `procesos`       | array   | Respuesta | Objetos de proceso       | `ejecutor`             | Lista de objetos de proceso                |
+
+<sup>1</sup>Los mensajes esperados dependen del nodo. Sin embargo, el nodo `ctrllt` tiene unos específicos que se listan a conitnuación:
+
+* Serivicio desconocido
+* Operación ctrllt desconocida
+* Servicio no encontrado
+* Error enviando solicitud al servicio
+* Error leyendo respuesta del servicio
