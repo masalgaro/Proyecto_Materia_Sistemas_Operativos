@@ -82,7 +82,7 @@ El ejecutor también responde a las instrucciones de suspender y resumir. En vez
 
 # Formato de los mensajes 
 
-Se manejan diferentes formatos de esperados para la comunicación entre los diferentes nodos.
+Se manejan diferentes formatos de los mensajes esperados para la comunicación entre los diferentes nodos.
 
 ## Campos del Gestor de ficheros
 
