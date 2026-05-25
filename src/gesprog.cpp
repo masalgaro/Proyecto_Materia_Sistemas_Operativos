@@ -258,7 +258,7 @@ void bucle_gesprog(const ConfigGesprog &cfg) {
   std::string retorno = cfg.tuberia_retorno.empty() ? cfg.tuberia_ingreso + "-retorno" : cfg.tuberia_retorno;
  
   mkdir(cfg.aralmac.c_str(), 0755);
-  std::cout << "gesprog listo en " << cfg.tuberia_ingreso << " | aralmac: " << cfg.aralmac << "\n";
+  std::cout << "INFO: gesprog listo en " << cfg.tuberia_ingreso << " | aralmac: " << cfg.aralmac << "\n";
  
   while (true) {
     int fd_entrada = open(cfg.tuberia_ingreso.c_str(), O_RDONLY);

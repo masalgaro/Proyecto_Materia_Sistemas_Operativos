@@ -97,7 +97,7 @@ json propagar_control(const ConfigCtrllt &cfg, const std::string &operacion) {
 
 json enrutar_peticion(const ConfigCtrllt &cfg, const json &peticion) {
   if (!peticion.contains("servicio")) {
-    return respuesta_error("Servicio desconocido");
+    return respuesta_error("ERROR: Servicio desconocido");
   }
  
   const std::string servicio = peticion["servicio"];
@@ -112,13 +112,14 @@ json enrutar_peticion(const ConfigCtrllt &cfg, const json &peticion) {
       return resp_ok;
     }
 
-    return respuesta_error("Operación ctrllt desconocida");
+    // Propagación de Suspender/Resumir
+    if (operacion == "Suspender" || operacion == "Resumir") {
+      return propagar_control(cfg, operacion);
+    }
+
+    return respuesta_error("ERROR: Operación ctrllt desconocida");
   }
  
-  // Propagación de Suspender/Resumir
-  if (operacion == "Suspender" || operacion == "Resumir") {
-    return propagar_control(cfg, operacion);
-  }
  
   // Enrutamiento normal
   if (servicio == "gesfich") {
@@ -146,7 +147,7 @@ json enrutar_peticion(const ConfigCtrllt &cfg, const json &peticion) {
 void bucle_ctrllt(const ConfigCtrllt &cfg) {
   std::string retorno_cliente = cfg.tuberia_retorno.empty() ? cfg.tuberia_cliente + "-retorno" : cfg.tuberia_retorno;
  
-  std::cout << "ctrllt listo en " << cfg.tuberia_cliente << "\n";
+  std::cout << "INFO: ctrllt listo en " << cfg.tuberia_cliente << "\n";
  
   while (true) {
     int fd_entrada = open(cfg.tuberia_cliente.c_str(), O_RDONLY);

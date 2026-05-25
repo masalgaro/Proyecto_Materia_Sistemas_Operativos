@@ -307,7 +307,7 @@ json procesar_peticion(const std::string &aralmac, std::unordered_map<std::strin
       }
     }
     debe_parar = true;
-    std::cout << "ejecutor: terminando.\n";
+    std::cout << "INFO: ejecutor: terminando.\n";
 
     return respuesta_ok();
   }
@@ -319,7 +319,7 @@ void bucle_ejecutor(const ConfigEjecutor &cfg) {
   std::string retorno = cfg.tuberia_retorno.empty() ? cfg.tuberia_ingreso + "-retorno" : cfg.tuberia_retorno;
  
   std::unordered_map<std::string, ProcesoLote> procesos;
-  std::cout << "ejecutor listo en " << cfg.tuberia_ingreso << " | aralmac: " << cfg.aralmac << "\n";
+  std::cout << "INFO: ejecutor listo en " << cfg.tuberia_ingreso << " | aralmac: " << cfg.aralmac << "\n";
  
   while (true) {
     int fd_entrada = open(cfg.tuberia_ingreso.c_str(), O_RDONLY);
