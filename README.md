@@ -2,11 +2,11 @@
 
 > Desarrollado por: Miguel Ángel Gómez Olarte
 
-Un proyecto que conecta múltiples programas entre sí para realizar actividades simples entre sí.
+Un proyecto que conecta múltiples programas entre sí para realizar actividades simples.
 
 ## Definición 
 
-Dentro de `docs/` hay un archivo explicando todas las definiciones y características del programa desde cero.
+Dentro de `docs/` hay un archivo explicando todas las definiciones y características de los programas desde cero.
 
 ## Dependencias y detalles extra
 
@@ -14,7 +14,7 @@ Si bien este es un programa simple, se hace uso de CMake con el propósito, no s
 
 Este proyecto está escrito en C++, que por defecto no maneja archivos JSON fácilmente, para combatir esto usamos la librearía `json` desarrollada por **nlohmann**, [ver aquí](https://github.com/nlohmann/json).
 
-Con el fin de permitir que la instalación del programa sea sencilla y se pueda usar código más limpio, usando objetivos como `nlohmann::json` que CMake puede reemplazar con código funcional. Y esto es posible con ayuda del manejador de dependencias Conan.
+Con el fin de permitir que la instalación del programa sea sencilla y se pueda usar código más limpio, se usaron objetivos como `nlohmann::json` que CMake puede reemplazar con código funcional. Esto también fue ayudado por el manejador de dependencias Conan.
 
 ### Instalación
 
@@ -25,8 +25,6 @@ Una vez instalado, con ejecutar `conan` en la terminal se muestran las opciones 
 Desde el mismo sitio web, se encuentra un tutorial básico de cómo trabajar con Conan, con más ejemplos de los que serían pertinentes explicar en este documento.
 
 Como guía básica para poner en marcha este proyecto, una vez que la instalación de Conan ha sido terminada se debe ejecutar `conan profile detect` para identificar detalles como tu compilador y arquitectura de CPU. Si no se usa este comando, cualquier otro comando de Conan fallará.
-
----
 
 Las dependencias se instalan en el momento de que se compila el proyecto, para esto, se deben ejecutar los siguientes comandos en la terminal, ubicados en la raíz del proyecto:
 
