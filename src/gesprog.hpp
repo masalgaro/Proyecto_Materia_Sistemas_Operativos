@@ -5,7 +5,7 @@
 #include <vector>
 
 struct ConfigGesprog {
-  std::string tuberia_ingerso;
+  std::string tuberia_ingreso;
   std::string tuberia_retorno;
   std::string aralmac;
 };

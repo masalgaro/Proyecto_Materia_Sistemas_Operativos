@@ -12,7 +12,7 @@
 
 void mostrar_uso(const char *nombre_prog) {
   std::cerr << "Uso: " << nombre_prog
-            << " -e <tuberia> [-d <tuberia-retorno>] -x <aralmac>\n"
+            << " -e <tuberia-ingreso> [-d <tuberia-retorno>] -x <aralmac>\n"
             << "  -e  Tubería de entrada\n"
             << "  -d  Tubería de retorno (opcional)\n"
             << "  -x  Directorio de almacenamiento (aralmac)\n";
@@ -23,7 +23,7 @@ bool parse_args(int argc, char *argv[], ConfigEjecutor &cfg) {
   while ((opt = getopt(argc, argv, "e:d:x:")) != -1) {
     switch (opt) {
     case 'e':
-      cfg.tuberia = optarg;
+      cfg.tuberia_ingreso = optarg;
       break;
     case 'd':
       cfg.tuberia_retorno = optarg;
@@ -36,7 +36,7 @@ bool parse_args(int argc, char *argv[], ConfigEjecutor &cfg) {
     }
   }
 
-  return !cfg.tuberia.empty() && !cfg.aralmac.empty();
+  return !cfg.tuberia_ingreso.empty() && !cfg.aralmac.empty();
 }
 
 static std::string siguiente_id_ejecucion(const std::unordered_map<std::string, ProcesoLote> &procesos) {
@@ -182,6 +182,42 @@ json op_ejecutar(const std::string &aralmac, std::unordered_map<std::string, Pro
   return r;
 }
 
+json op_estado(std::unordered_map<std::string, ProcesoLote> &procesos, const json &peticion) {
+  actualizar_estados(procesos);
+ 
+  if (peticion.contains("id-ejecucion")) {
+    const std::string id = peticion["id-ejecucion"];
+    auto it = procesos.find(id);
+    if (it == procesos.end()) {
+      return respuesta_error("Proceso no encontrado: " + id);
+    }
+
+    const ProcesoLote &p = it->second;
+    json r = respuesta_ok();
+    r["id-ejecucion"] = p.id_ejecucion;
+    r["id-programa"] = p.id_programa;
+    r["proceso-estado"] = p.estado;
+    r["codigo-salida"] = p.codigo_salida;
+
+    return r;
+  }
+ 
+  // Sin ID: listar todos los procesos
+  json lista = json::array();
+  for (const auto &par : procesos) {
+    const ProcesoLote &p = par.second;
+    lista.push_back({{"id-ejecucion", p.id_ejecucion},
+                     {"id-programa", p.id_programa},
+                     {"proceso-estado", p.estado},
+                     {"codigo-salida", p.codigo_salida}});
+  }
+
+  json r = respuesta_ok();
+  r["procesos"] = lista;
+
+  return r;
+}
+
 json op_matar(std::unordered_map<std::string, ProcesoLote> &procesos, const std::string &id_ejecucion) {
   auto it = procesos.find(id_ejecucion);
   if (it == procesos.end()) {
@@ -280,13 +316,13 @@ json procesar_peticion(const std::string &aralmac, std::unordered_map<std::strin
 }
 
 void bucle_ejecutor(const ConfigEjecutor &cfg) {
-  std::string retorno = cfg.tuberia_retorno.empty() ? cfg.tuberia + "-retorno" : cfg.tuberia_retorno;
+  std::string retorno = cfg.tuberia_retorno.empty() ? cfg.tuberia_ingreso + "-retorno" : cfg.tuberia_retorno;
  
   std::unordered_map<std::string, ProcesoLote> procesos;
-  std::cout << "ejecutor listo en " << cfg.tuberia << " | aralmac: " << cfg.aralmac << "\n";
+  std::cout << "ejecutor listo en " << cfg.tuberia_ingreso << " | aralmac: " << cfg.aralmac << "\n";
  
   while (true) {
-    int fd_entrada = open(cfg.tuberia.c_str(), O_RDONLY);
+    int fd_entrada = open(cfg.tuberia_ingreso.c_str(), O_RDONLY);
     if (fd_entrada < 0) {
       std::cerr << "ERROR: ejecutor: error abriendo tubería de entrada\n";
       break;
@@ -319,7 +355,7 @@ void bucle_ejecutor(const ConfigEjecutor &cfg) {
 
 int main(int argc, char *argv[]) {
   ConfigEjecutor cfg;
-  if (!parsear_args(argc, argv, cfg)) {
+  if (!parse_args(argc, argv, cfg)) {
     mostrar_uso(argv[0]);
 
     return 1;

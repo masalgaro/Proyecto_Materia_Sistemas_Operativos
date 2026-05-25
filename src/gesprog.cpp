@@ -11,7 +11,7 @@
 
 void mostrar_uso(const char *nombre_prog) {
   std::cerr << "Uso: " << nombre_prog
-            << " -p <tuberia> [-c <tuberia-retorno>] -x <aralmac>\n"
+            << " -p <tuberia-ingreso> [-c <tuberia-retorno>] -x <aralmac>\n"
             << "  -p  Tubería de entrada\n"
             << "  -c  Tubería de retorno (opcional)\n"
             << "  -x  Directorio de almacenamiento (aralmac)\n";
@@ -22,7 +22,7 @@ bool parse_args(int argc, char *argv[], ConfigGesprog &cfg) {
   while ((opt = getopt(argc, argv, "p:c:x:")) != -1) {
     switch (opt) {
     case 'p':
-      cfg.tuberia = optarg;
+      cfg.tuberia_ingreso = optarg;
       break;
     case 'c':
       cfg.tuberia_retorno = optarg;
@@ -35,7 +35,7 @@ bool parse_args(int argc, char *argv[], ConfigGesprog &cfg) {
     }
   }
 
-  return !cfg.tuberia.empty() && !cfg.aralmac.empty();
+  return !cfg.tuberia_ingreso.empty() && !cfg.aralmac.empty();
 }
 
 static std::string ruta_meta(const std::string &aralmac, const std::string &id) {
@@ -223,7 +223,7 @@ json procesar_peticion(const std::string &aralmac, const json &peticion) {
  
   if (op == "Leer") {
     if (peticion.contains("id-programa")) {
-      return op_leer(aralmac, peticion["id-programa"]);
+      return op_leer_uno(aralmac, peticion["id-programa"]);
     }
     
     return op_leer_todos(aralmac);
@@ -255,14 +255,13 @@ json procesar_peticion(const std::string &aralmac, const json &peticion) {
 }
 
 void bucle_gesprog(const ConfigGesprog &cfg) {
-  std::string retorno = cfg.tuberia_retorno.empty() ? cfg.tuberia + "-retorno"
-                                                    : cfg.tuberia_retorno;
+  std::string retorno = cfg.tuberia_retorno.empty() ? cfg.tuberia_ingreso + "-retorno" : cfg.tuberia_retorno;
  
   mkdir(cfg.aralmac.c_str(), 0755);
-  std::cout << "gesprog listo en " << cfg.tuberia << " | aralmac: " << cfg.aralmac << "\n";
+  std::cout << "gesprog listo en " << cfg.tuberia_ingreso << " | aralmac: " << cfg.aralmac << "\n";
  
   while (true) {
-    int fd_entrada = open(cfg.tuberia.c_str(), O_RDONLY);
+    int fd_entrada = open(cfg.tuberia_ingreso.c_str(), O_RDONLY);
     if (fd_entrada < 0) {
       std::cerr << "ERROR: gesprog: No se pudo abrir la tubería de entrada\n";
       break;
@@ -295,7 +294,7 @@ void bucle_gesprog(const ConfigGesprog &cfg) {
 
 int main(int argc, char *argv[]) {
   ConfigGesprog cfg;
-  if (!parsear_args(argc, argv, cfg)) {
+  if (!parse_args(argc, argv, cfg)) {
     mostrar_uso(argv[0]);
   
     return 1;

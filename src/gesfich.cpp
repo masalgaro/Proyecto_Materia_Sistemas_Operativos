@@ -181,7 +181,7 @@ json procesar_peticion(const std::string &aralmac, const json &peticion) {
  
   if (op == "Leer") {
     if (peticion.contains("id-fichero")) {
-      return op_leer(aralmac, peticion["id-fichero"]);
+      return op_leer_uno(aralmac, peticion["id-fichero"]);
     }
 
     return op_leer_todos(aralmac);
@@ -254,7 +254,7 @@ void bucle_gesfich(const ConfigGesfich &cfg) {
 
 int main(int argc, char *argv[]) {
   ConfigGesfich cfg;
-  if (!parsear_args(argc, argv, cfg)) {
+  if (!parse_args(argc, argv, cfg)) {
     mostrar_uso(argv[0]);
 
     return 1;

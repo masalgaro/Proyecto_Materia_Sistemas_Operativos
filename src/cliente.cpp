@@ -15,28 +15,28 @@ void mostrar_uso(const char *nombre_prog) {
             << "  -a: Tubería nombrada de retorno.\n";
 }
 
-bool parse_args(int argc, char *argv[], std::string &tuberia-ctrllt, std::string &tuberia-retorno) {
+bool parse_args(int argc, char *argv[], std::string &tuberia_ctrllt, std::string &tuberia_retorno) {
   int opt;
   while ((opt = getopt(argc, argv, "c:a:")) != -1) {
     switch (opt) {
       case 'c':
-        tuberia-ctrllt = optarg;
+        tuberia_ctrllt = optarg;
         break;
       case 'a':
-        tuberia-retorno = optarg;
+        tuberia_retorno = optarg;
         break;
       default:
         return false;
     }
   }
 
-  return !tuberia-ctrllt.empty();
+  return !tuberia_ctrllt.empty();
 }
 
-json enviar_peticion(const std::string &tuberia-ctrllt, const std::string &tuberia-retorno, const json &peticion) {
-  int fd_envio = open(tuberia-ctrllt.c_str(), O_WRONLY);
+json enviar_peticion(const std::string &tuberia_ctrllt, const std::string &tuberia_retorno, const json &peticion) {
+  int fd_envio = open(tuberia_ctrllt.c_str(), O_WRONLY);
   if (fd_envio < 0) {
-    throw std::runtime_error("No se pudo abrir la tubería a ctrllt: " + tuberia-ctrllt);
+    throw std::runtime_error("No se pudo abrir la tubería a ctrllt: " + tuberia_ctrllt);
   }
 
   if (!escribir_mensaje(fd_envio, peticion)) {
@@ -45,9 +45,9 @@ json enviar_peticion(const std::string &tuberia-ctrllt, const std::string &tuber
   }
   close(fd_envio);
 
-  int fd_retorno = open(tuberia-retorno.c_str(), O_RDONLY);
+  int fd_retorno = open(tuberia_retorno.c_str(), O_RDONLY);
   if (fd_retorno < 0) {
-    throw std::runtime_error("No se pudo abrir la tuberia de retorno: " + tuberia-retorno);
+    throw std::runtime_error("No se pudo abrir la tuberia de retorno: " + tuberia_retorno);
   }
 
   json respuesta = leer_mensaje(fd_retorno);
@@ -90,7 +90,7 @@ static void imprimir_ayuda() {
             << "  ayuda                         Muestra este mensaje\n";
 }
 
-void bucle_cliente(const std::string &tuberia-ctrllt, const std::string &tuberia-retorno) {
+void bucle_cliente(const std::string &tuberia_ctrllt, const std::string &tuberia_retorno) {
   std::string linea;
   std::cout << "Cliente listo. Escribe \"ayuda\" para ver los comandos.\n";
 
@@ -141,7 +141,7 @@ void bucle_cliente(const std::string &tuberia-ctrllt, const std::string &tuberia
       if (tokens.size() >= 2) {
         const std::string &id = tokens[1];
         if (id.rfind("f-", 0) == 0) {
-          peticion = {{"servicio", "gesfich"}.
+          peticion = {{"servicio", "gesfich"},
                       {"operacion", "Leer"},
                       {"id-fichero", id}};
         } else if (id.rfind("p-", 0) == 0) {
@@ -158,10 +158,10 @@ void bucle_cliente(const std::string &tuberia-ctrllt, const std::string &tuberia
 
         try {
           std::cout << "Ficheros:\n";
-          mostrar_respuesta(enviar_peticion(tuberia-ctrllt, tuberia-retorno, pet_f));
+          mostrar_respuesta(enviar_peticion(tuberia_ctrllt, tuberia_retorno, pet_f));
 
           std::cout << "Programas:\n";
-          mostrar_respuesta(enviar_peticion(tuberia-ctrllt, tuberia-retorno, pet_p));
+          mostrar_respuesta(enviar_peticion(tuberia_ctrllt, tuberia_retorno, pet_p));
         } catch (const std::exception &e) {
           std::cerr << "ERROR: " << e.what() << "\n";
         }
@@ -221,7 +221,7 @@ void bucle_cliente(const std::string &tuberia-ctrllt, const std::string &tuberia
       }
 
       peticion = {{"servicio", "ejecutorr"}, {"operacion", "Ejecutar"},
-                  {"id-programa", tokens[1]}. {"stdin", tokens[2]},
+                  {"id-programa", tokens[1]}, {"stdin", tokens[2]},
                   {"stdout", tokens[3]}, {"stderr", tokens[4]}};
     }
 
@@ -251,7 +251,7 @@ void bucle_cliente(const std::string &tuberia-ctrllt, const std::string &tuberia
       peticion = {{"servicio", "ctrllt"}, {"operacion", "Suspender"}};
 
       try {
-        mostrar_respuesta(enviar_peticion(tuberia-ctrllt, tuberia-retorno, peticion));
+        mostrar_respuesta(enviar_peticion(tuberia_ctrllt, tuberia_retorno, peticion));
       }
       catch (const std::exception &e) {
         std::cerr << "ERROR: " << e.what() << "\n";
@@ -263,7 +263,7 @@ void bucle_cliente(const std::string &tuberia-ctrllt, const std::string &tuberia
       peticion = {{"servicio", "ctrllt"}, {"operacion", "Resumir"}};
 
       try {
-        mostrar_respuesta(enviar_peticion(tuberia-ctrllt, tuberia-retorno, peticion));
+        mostrar_respuesta(enviar_peticion(tuberia_ctrllt, tuberia_retorno, peticion));
       }
       catch (const std::exception &e) {
         std::cerr << "ERROR: " << e.what() << "\n";
@@ -275,7 +275,7 @@ void bucle_cliente(const std::string &tuberia-ctrllt, const std::string &tuberia
       peticion = {{"servicio", "ctrllt"}, {"operacion", "Terminar"}};
 
       try {
-        mostrar_respuesta(enviar_peticion(tuberia-ctrllt, tuberia-retorno, peticion));
+        mostrar_respuesta(enviar_peticion(tuberia_ctrllt, tuberia_retorno, peticion));
       }
       catch (const std::exception &e) {
         std::cerr << "ERROR: " << e.what() << "\n";
@@ -290,7 +290,7 @@ void bucle_cliente(const std::string &tuberia-ctrllt, const std::string &tuberia
 
     // Enviar y mostrar JSON
     try {
-      json respuesta = enviar_peticion(tuberia-ctrllt, tuberia-retorno, peticion);
+      json respuesta = enviar_peticion(tuberia_ctrllt, tuberia_retorno, peticion);
       mostrar_respuesta(respuesta);
     }
     catch (const std::exception &e) {
@@ -301,21 +301,21 @@ void bucle_cliente(const std::string &tuberia-ctrllt, const std::string &tuberia
 
 // main
 int main(int argc, char *argv[]) {
-  std::string tuberia-ctrllt;
-  std::string tuberia-retorno;
+  std::string tuberia_ctrllt;
+  std::string tuberia_retorno;
 
-  if (!parse_args(argc, argv, tuberia-ctrllt, tuberia-retorno)) {
+  if (!parse_args(argc, argv, tuberia_ctrllt, tuberia_retorno)) {
     mostrar_uso(argv[0]);
 
     return 1;
   }
 
   // Si no se pasa el argumento -a, como esto se ejecuta en Linux aún debemos crear otra tuberia.
-  if (tuberia-retorno.empty()) {
-    tuberia-retorno = tuberia-ctrllt + "-retorno";
+  if (tuberia_retorno.empty()) {
+    tuberia_retorno = tuberia_ctrllt + "-retorno";
   }
 
-  bucle_cliente(tuberia-ctrllt, tuberia-retorno);
+  bucle_cliente(tuberia_ctrllt, tuberia_retorno);
 
   return 0;
 }

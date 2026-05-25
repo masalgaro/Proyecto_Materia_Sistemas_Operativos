@@ -187,7 +187,7 @@ void bucle_ctrllt(const ConfigCtrllt &cfg) {
 
 int main(int argc, char *argv[]) {
   ConfigCtrllt cfg;
-  if (!parsear_args(argc, argv, cfg)) {
+  if (!parse_args(argc, argv, cfg)) {
     mostrar_uso(argv[0]);
 
     return 1;
