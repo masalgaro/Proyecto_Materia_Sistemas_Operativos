@@ -35,3 +35,7 @@ Las dependencias se instalan en el momento de que se compila el proyecto, para e
 `cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="conan_toolchain.cmake" -DCMAKE_BUILD_TYP=Release` toma uno de los ficheros generados por el comando anterior para decirle a CMake cómo debe trabajar con las dependencias del proyecto.
 
 `cmake --build build` construye el proyecto dentro del directorio `build/`.
+
+## Uso
+
+Se recomienda ver dentro de la carpeta `/tests/`. En el interior está un archivo de prueba de que la librearía fue instalada y funciona correctamente, y un script en bash que demuestra funcionalidades básicas, el comportamiento de los programas, y un ejemplo de cómo realizar su ejecución.
