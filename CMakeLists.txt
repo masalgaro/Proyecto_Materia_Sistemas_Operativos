@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(nlohmann_json 3.12.0 REQUIRED)
 
 # Prueba de dependencias
-add_executable(example dep_test.cpp)
+add_executable(example tests/dep_test.cpp)
 target_link_libraries(example PRIVATE nlohmann_json::nlohmann_json)
 
 # Los archivos principales
